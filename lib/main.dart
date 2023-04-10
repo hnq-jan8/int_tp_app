@@ -8,11 +8,11 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: Scaffold(
-        backgroundColor: Colors.purple,
-        body: Center(child: Login()),
+        backgroundColor: Colors.purple[900],
+        body: const Center(child: Login()),
       ),
     );
   }
