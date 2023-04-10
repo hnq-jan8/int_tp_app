@@ -13,6 +13,8 @@ class _LoginState extends State<Login> {
   String password = '';
   String otp = '';
 
+  var otpController = List.generate(6, (index) => TextEditingController());
+
   switchObscure({required isObscure}) {
     setState(() {
       isObscure = !isObscure;
@@ -31,36 +33,8 @@ class _LoginState extends State<Login> {
         signInContainer(),
         signInContainer(label: 'Password'),
         otpRequesting(),
-        otpFields(),
-        Container(
-          constraints: const BoxConstraints(
-            maxWidth: 337,
-            maxHeight: 60,
-          ),
-          margin: const EdgeInsets.only(top: 50),
-          child: ElevatedButton(
-            onPressed: () => debugPrint(
-              'Username: $username, Password: $password, OTP: $otp',
-            ),
-            style: ButtonStyle(
-              backgroundColor: MaterialStatePropertyAll(Colors.purple[700]),
-              foregroundColor: MaterialStatePropertyAll(Colors.orange[400]),
-              shape: MaterialStatePropertyAll(
-                RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(50),
-                ),
-              ),
-            ),
-            child: const Center(
-              child: Text(
-                'Đăng nhập',
-                style: TextStyle(
-                  fontSize: 16,
-                ),
-              ),
-            ),
-          ),
-        )
+        otpFields(context),
+        signInButton()
       ],
     );
   }
@@ -109,7 +83,7 @@ class _LoginState extends State<Login> {
             color: Colors.white60,
           ),
           alignLabelWithHint: true,
-          hintText: 'Nhập ${label.toLowerCase()}',
+          hintText: label,
           hintStyle: const TextStyle(
             color: Colors.white38,
           ),
@@ -160,64 +134,106 @@ class _LoginState extends State<Login> {
     );
   }
 
-  Row otpFields() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        otpField(isFirstField: true),
-        otpField(),
-        otpField(),
-        otpField(),
-        otpField(),
-        otpField(isLastField: true),
-      ],
+  SizedBox otpFields(BuildContext context) {
+    return SizedBox(
+      height: 70,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: List.generate(
+          6,
+          (index) => Container(
+            constraints: const BoxConstraints(
+              maxWidth: 360 / 6.1,
+              maxHeight: 76,
+            ),
+            padding: const EdgeInsets.all(8),
+            child: TextField(
+              controller: otpController[index],
+              cursorColor: Colors.orange,
+              onChanged: (value) {
+                if (value.length == 1 && index <= 5) {
+                  FocusScope.of(context).nextFocus();
+                } else if (value.isEmpty && index > 0) {
+                  FocusScope.of(context).previousFocus();
+                }
+                // when pasting OTP
+                if (value.length > 1) {
+                  for (var i = 0; i < value.length; i++) {
+                    if (i < 6) {
+                      otpController[i].text = value[i];
+                      if (i < 5) {
+                        FocusScope.of(context).nextFocus();
+                      }
+                    }
+                  }
+                }
+                otp = otpController[0].text +
+                    otpController[1].text +
+                    otpController[2].text +
+                    otpController[3].text +
+                    otpController[4].text +
+                    otpController[5].text;
+              },
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+              ),
+              textAlign: TextAlign.center,
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: Colors.black.withOpacity(0.2),
+                labelStyle: const TextStyle(
+                  color: Colors.white60,
+                ),
+                enabledBorder: const OutlineInputBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(10)),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: const OutlineInputBorder(
+                  borderSide: BorderSide(
+                    color: Colors.white70,
+                  ),
+                  borderRadius: BorderRadius.all(Radius.circular(10)),
+                ),
+              ),
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+                // LengthLimitingTextInputFormatter(1),
+              ],
+              keyboardType: TextInputType.number,
+            ),
+          ),
+        ),
+      ),
     );
   }
 
-  Container otpField({bool isFirstField = false, bool isLastField = false}) {
+  Container signInButton() {
     return Container(
       constraints: const BoxConstraints(
-        maxWidth: 360 / 6.1,
-        maxHeight: 76,
+        maxWidth: 337,
+        maxHeight: 60,
       ),
-      padding: const EdgeInsets.all(8),
-      child: TextFormField(
-        keyboardType: TextInputType.number,
-        inputFormatters: [
-          LengthLimitingTextInputFormatter(1),
-          FilteringTextInputFormatter.digitsOnly,
-        ],
-        onChanged: (value) {
-          isFirstField ? otp = value : otp += value;
-          if (value.length == 1) {
-            !isLastField ? FocusScope.of(context).nextFocus() : null;
-          } else if (value.isEmpty) {
-            !isFirstField ? FocusScope.of(context).previousFocus() : null;
-          }
-        },
-        onTapOutside: (event) => FocusScope.of(context).unfocus(),
-        cursorColor: Colors.orange,
-        textAlign: TextAlign.center,
-        textAlignVertical: TextAlignVertical.top,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 20,
+      margin: const EdgeInsets.only(top: 50),
+      child: ElevatedButton(
+        onPressed: () => debugPrint(
+          'Username: $username, Password: $password, OTP: $otp',
         ),
-        decoration: InputDecoration(
-          filled: true,
-          fillColor: Colors.black.withOpacity(0.2),
-          labelStyle: const TextStyle(
-            color: Colors.white60,
-          ),
-          enabledBorder: const OutlineInputBorder(
-            borderRadius: BorderRadius.all(Radius.circular(10)),
-            borderSide: BorderSide.none,
-          ),
-          focusedBorder: const OutlineInputBorder(
-            borderSide: BorderSide(
-              color: Colors.white70,
+        style: ButtonStyle(
+          backgroundColor: MaterialStatePropertyAll(Colors.purple[700]),
+          foregroundColor: MaterialStatePropertyAll(Colors.orange[400]),
+          shape: MaterialStatePropertyAll(
+            RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(50),
             ),
-            borderRadius: BorderRadius.all(Radius.circular(10)),
+          ),
+        ),
+        child: const Center(
+          child: Text(
+            'Đăng nhập',
+            style: TextStyle(
+              fontSize: 16,
+            ),
           ),
         ),
       ),
