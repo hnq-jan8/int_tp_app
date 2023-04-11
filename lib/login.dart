@@ -25,17 +25,19 @@ class _LoginState extends State<Login> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.max,
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: <Widget>[
-        welcomeUserSignIn(),
-        signInContainer(),
-        signInContainer(label: 'Password'),
-        otpRequesting(),
-        otpFields(context),
-        signInButton()
-      ],
+    return SingleChildScrollView(
+      child: Column(
+        mainAxisSize: MainAxisSize.max,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          welcomeUserSignIn(),
+          signInContainer(),
+          signInContainer(label: 'Password'),
+          otpRequesting(),
+          otpFields(context),
+          signInButton()
+        ],
+      ),
     );
   }
 
@@ -43,7 +45,7 @@ class _LoginState extends State<Login> {
     return Container(
       constraints: const BoxConstraints(maxWidth: 360),
       alignment: Alignment.centerLeft,
-      margin: const EdgeInsets.only(bottom: 20, left: 25),
+      margin: const EdgeInsets.only(top: 40, bottom: 20, left: 25),
       child: const Text(
         'Chào mừng !',
         style: TextStyle(
@@ -214,7 +216,7 @@ class _LoginState extends State<Login> {
         maxWidth: 337,
         maxHeight: 60,
       ),
-      margin: const EdgeInsets.only(top: 50),
+      margin: const EdgeInsets.only(top: 50, bottom: 40),
       child: ElevatedButton(
         onPressed: () => debugPrint(
           'Username: $username, Password: $password, OTP: $otp',
