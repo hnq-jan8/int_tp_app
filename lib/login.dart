@@ -175,17 +175,8 @@ class _LoginState extends State<Login> {
               focusNode: otpFocusNode[index],
               showCursor: false,
               onTap: () {
-                for (var i = 0; i < 6; i++) {
-                  if (otpController[i].text == hiddenChar) {
-                    otpFocusNode[i].requestFocus();
-                    break;
-                  }
-                  if (otpController[i].text.isEmpty) {
-                    otpController[i].text = hiddenChar;
-                    otpFocusNode[i].requestFocus();
-                    break;
-                  }
-                  otpFocusNode[5].requestFocus();
+                if (otpController[index].text.isEmpty) {
+                  otpController[index].text = hiddenChar;
                 }
                 otpController[index].selection = TextSelection.fromPosition(
                   TextPosition(offset: otpController[index].text.length),
@@ -193,7 +184,7 @@ class _LoginState extends State<Login> {
               },
               onTapOutside: (event) {
                 if (otpController[index].text == hiddenChar) {
-                  otpController[index].text = '';
+                  otpController[index].clear();
                 }
                 updateOtp();
               },
@@ -214,7 +205,9 @@ class _LoginState extends State<Login> {
                     }
                   } else {
                     if (index < 5) {
-                      otpController[index + 1].text = hiddenChar;
+                      if (otpController[index + 1].text.isEmpty) {
+                        otpController[index + 1].text = hiddenChar;
+                      }
                       FocusScope.of(context).nextFocus();
                     } else {
                       FocusScope.of(context).unfocus();
