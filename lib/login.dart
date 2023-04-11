@@ -14,6 +14,9 @@ class _LoginState extends State<Login> {
   String otp = '';
 
   var otpController = List.generate(6, (index) => TextEditingController());
+  var otpFocusNode = List.generate(6, (index) => FocusNode());
+
+  bool _isObscure = true;
 
   switchObscure({required isObscure}) {
     setState(() {
@@ -21,7 +24,23 @@ class _LoginState extends State<Login> {
     });
   }
 
-  bool _isObscure = true;
+  String updateOtp() {
+    return otp = otpController[0].text +
+        otpController[1].text +
+        otpController[2].text +
+        otpController[3].text +
+        otpController[4].text +
+        otpController[5].text;
+  }
+
+  @override
+  void dispose() {
+    for (var i = 0; i < 6; i++) {
+      otpController[i].dispose();
+      otpFocusNode[i].dispose();
+    }
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,11 +50,11 @@ class _LoginState extends State<Login> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
           welcomeUserSignIn(),
-          signInContainer(),
-          signInContainer(label: 'Password'),
-          otpRequesting(),
+          signInField(),
+          signInField(label: 'Password'),
+          twoStepAuthentication(),
           otpFields(context),
-          signInButton()
+          signInButton(),
         ],
       ),
     );
@@ -45,7 +64,7 @@ class _LoginState extends State<Login> {
     return Container(
       constraints: const BoxConstraints(maxWidth: 360),
       alignment: Alignment.centerLeft,
-      margin: const EdgeInsets.only(top: 40, bottom: 20, left: 25),
+      margin: const EdgeInsets.only(top: 150, bottom: 20, left: 25),
       child: const Text(
         'Chào mừng !',
         style: TextStyle(
@@ -56,7 +75,7 @@ class _LoginState extends State<Login> {
     );
   }
 
-  Container signInContainer({label = 'Username'}) {
+  Container signInField({label = 'Username'}) {
     return Container(
       constraints: const BoxConstraints(
         maxWidth: 360,
@@ -78,13 +97,11 @@ class _LoginState extends State<Login> {
           filled: true,
           fillColor: Colors.black.withOpacity(0.2),
           floatingLabelBehavior: FloatingLabelBehavior.never,
-          // alignLabelWithHint: true,
           contentPadding: const EdgeInsets.symmetric(vertical: 20),
           labelText: label,
           labelStyle: const TextStyle(
             color: Colors.white60,
           ),
-          alignLabelWithHint: true,
           hintText: label,
           hintStyle: const TextStyle(
             color: Colors.white38,
@@ -121,13 +138,13 @@ class _LoginState extends State<Login> {
     );
   }
 
-  Container otpRequesting() {
+  Container twoStepAuthentication({label = 'OTP'}) {
     return Container(
       constraints: const BoxConstraints(maxWidth: 360),
       alignment: Alignment.center,
       margin: const EdgeInsets.only(top: 50, bottom: 15),
       child: Text(
-        'Nhập mã OTP cơ bản',
+        label == 'OTP' ? 'Nhập mã OTP cơ bản' : label,
         style: TextStyle(
           color: Colors.white.withOpacity(0.9),
           fontSize: 16,
@@ -137,6 +154,7 @@ class _LoginState extends State<Login> {
   }
 
   SizedBox otpFields(BuildContext context) {
+    var hiddenChar = ' '; // for backward delete supporting
     return SizedBox(
       height: 70,
       child: Row(
@@ -145,62 +163,102 @@ class _LoginState extends State<Login> {
           6,
           (index) => Container(
             constraints: const BoxConstraints(
-              maxWidth: 360 / 6.1,
-              maxHeight: 76,
+              maxWidth: 59,
+              maxHeight: 75,
             ),
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 5,
+              vertical: 8,
+            ),
             child: TextField(
               controller: otpController[index],
-              cursorColor: Colors.orange,
-              onChanged: (value) {
-                if (value.length == 1 && index <= 5) {
-                  FocusScope.of(context).nextFocus();
-                } else if (value.isEmpty && index > 0) {
-                  FocusScope.of(context).previousFocus();
+              focusNode: otpFocusNode[index],
+              showCursor: false,
+              onTap: () {
+                for (var i = 0; i < 6; i++) {
+                  if (otpController[i].text == hiddenChar) {
+                    otpFocusNode[i].requestFocus();
+                    break;
+                  }
+                  if (otpController[i].text.isEmpty) {
+                    otpController[i].text = hiddenChar;
+                    otpFocusNode[i].requestFocus();
+                    break;
+                  }
+                  otpFocusNode[5].requestFocus();
                 }
-                // when pasting OTP
-                if (value.length > 1) {
-                  for (var i = 0; i < value.length; i++) {
-                    if (i < 6) {
-                      otpController[i].text = value[i];
-                      if (i < 5) {
-                        FocusScope.of(context).nextFocus();
+                otpController[index].selection = TextSelection.fromPosition(
+                  TextPosition(offset: otpController[index].text.length),
+                );
+              },
+              onTapOutside: (event) {
+                if (otpController[index].text == hiddenChar) {
+                  otpController[index].text = '';
+                }
+                updateOtp();
+              },
+              onChanged: (value) {
+                if (value.length == 6) {
+                  for (var i = 0; i < 6; i++) {
+                    otpController[i].text = value[i];
+                  }
+                  FocusScope.of(context).unfocus();
+                } // when pasting OTP when and only when the OTP is 6 digits
+                else {
+                  if (value.isEmpty) {
+                    if (index > 0) {
+                      if (otpController[index - 1].text.isEmpty) {
+                        otpController[index - 1].text = hiddenChar;
                       }
+                      FocusScope.of(context).previousFocus();
+                    }
+                  } else {
+                    if (index < 5) {
+                      otpController[index + 1].text = hiddenChar;
+                      FocusScope.of(context).nextFocus();
+                    } else {
+                      FocusScope.of(context).unfocus();
+                    }
+                    if (value.length == 1) {
+                      otpController[index].text = value[0];
+                    } else if (value.length == 2) {
+                      otpController[index].text = value[1];
+                    } else {
+                      for (int i = 0; i < 6; i++) {
+                        otpController[i].clear();
+                      }
+                      otpFocusNode[0].requestFocus();
                     }
                   }
                 }
-                otp = otpController[0].text +
-                    otpController[1].text +
-                    otpController[2].text +
-                    otpController[3].text +
-                    otpController[4].text +
-                    otpController[5].text;
+                updateOtp();
               },
               style: const TextStyle(
                 color: Colors.white,
-                fontSize: 14,
+                fontSize: 16,
               ),
-              textAlign: TextAlign.center,
               decoration: InputDecoration(
+                contentPadding: const EdgeInsets.only(
+                  top: 18,
+                  bottom: 22,
+                  left: 19.4,
+                  right: 14,
+                ),
                 filled: true,
                 fillColor: Colors.black.withOpacity(0.2),
-                labelStyle: const TextStyle(
-                  color: Colors.white60,
-                ),
                 enabledBorder: const OutlineInputBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(10)),
+                  borderRadius: BorderRadius.all(Radius.circular(12)),
                   borderSide: BorderSide.none,
                 ),
-                focusedBorder: const OutlineInputBorder(
+                focusedBorder: OutlineInputBorder(
                   borderSide: BorderSide(
-                    color: Colors.white70,
+                    color: Colors.orange.shade400,
                   ),
-                  borderRadius: BorderRadius.all(Radius.circular(10)),
+                  borderRadius: const BorderRadius.all(Radius.circular(12)),
                 ),
               ),
               inputFormatters: [
                 FilteringTextInputFormatter.digitsOnly,
-                // LengthLimitingTextInputFormatter(1),
               ],
               keyboardType: TextInputType.number,
             ),
@@ -214,12 +272,12 @@ class _LoginState extends State<Login> {
     return Container(
       constraints: const BoxConstraints(
         maxWidth: 337,
-        maxHeight: 60,
+        maxHeight: 54,
       ),
-      margin: const EdgeInsets.only(top: 50, bottom: 40),
+      margin: const EdgeInsets.only(top: 50, bottom: 80),
       child: ElevatedButton(
         onPressed: () => debugPrint(
-          'Username: $username, Password: $password, OTP: $otp',
+          'Username: {$username}\nPassword: {$password}\nOTP: {$otp}',
         ),
         style: ButtonStyle(
           backgroundColor: MaterialStatePropertyAll(Colors.purple[700]),
@@ -231,12 +289,7 @@ class _LoginState extends State<Login> {
           ),
         ),
         child: const Center(
-          child: Text(
-            'Đăng nhập',
-            style: TextStyle(
-              fontSize: 16,
-            ),
-          ),
+          child: Text('ĐĂNG NHẬP', style: TextStyle(fontSize: 15)),
         ),
       ),
     );
