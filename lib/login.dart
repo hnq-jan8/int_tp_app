@@ -1,5 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import './home.dart';
+
+class LoginScreen extends StatelessWidget {
+  const LoginScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.purple[900],
+      body: const Center(child: Login()),
+    );
+  }
+}
 
 class Login extends StatefulWidget {
   const Login({super.key});
@@ -31,6 +44,37 @@ class _LoginState extends State<Login> {
         otpController[3].text +
         otpController[4].text +
         otpController[5].text;
+  }
+
+  void _completeLogin() {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => HomeScreen()),
+    );
+  }
+
+  Future<dynamic> _failLogin() {
+    return showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+        title: const Text('Thông báo', style: TextStyle(fontSize: 18)),
+        titlePadding: const EdgeInsets.only(top: 21, left: 25),
+        content: const Text('Đăng nhập thất bại'),
+        contentPadding: const EdgeInsets.only(top: 17, left: 27),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'OK',
+              style: TextStyle(fontSize: 15, color: Colors.purple[300]),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -269,9 +313,13 @@ class _LoginState extends State<Login> {
       ),
       margin: const EdgeInsets.only(top: 50, bottom: 80),
       child: ElevatedButton(
-        onPressed: () => debugPrint(
-          'Username: {$username}\nPassword: {$password}\nOTP: {$otp}',
-        ),
+        onPressed: () {
+          if (username == 'admin' && password == 'admin' && otp == '123456') {
+            _completeLogin();
+          } else {
+            _failLogin();
+          }
+        },
         style: ButtonStyle(
           backgroundColor: MaterialStatePropertyAll(Colors.purple[700]),
           foregroundColor: MaterialStatePropertyAll(Colors.orange[400]),
